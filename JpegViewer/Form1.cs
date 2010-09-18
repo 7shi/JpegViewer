@@ -76,11 +76,11 @@ namespace JpegViewer
 
             var cs = ClientSize;
 
+            var w = 50;
             var h = cs.Height / 2;
-            button1.Bounds = new Rectangle(0, 0, 32, h);
-            button2.Bounds = new Rectangle(0, h, 32, h);
+            button1.Bounds = new Rectangle(0, 0, w, h);
+            button2.Bounds = new Rectangle(0, h, w, h);
 
-            var w = 32; // vscrollBar1.Width;
             vscrollBar1.Bounds = new Rectangle(cs.Width - w, 0, w, cs.Height);
             Invalidate();
         }
@@ -92,6 +92,23 @@ namespace JpegViewer
 
             var s = ClientSize;
             e.Graphics.DrawImage(img, (s.Width - img.Width) / 2, (s.Height - img.Height) / 2);
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+
+            var h3 = ClientSize.Height / 3;
+            if (e.Y < h3)
+            {
+                if (vscrollBar1.Value > 0)
+                    vscrollBar1.Value--;
+            }
+            else if (e.Y > h3 * 2)
+            {
+                if (vscrollBar1.Value < vscrollBar1.Maximum - 9)
+                    vscrollBar1.Value++;
+            }
         }
 
         private void SetImage(int index)
