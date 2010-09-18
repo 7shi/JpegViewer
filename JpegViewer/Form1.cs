@@ -16,6 +16,7 @@ namespace JpegViewer
         private string dir;
         private string[] files;
         private Image img;
+        private Timer timer = new Timer();
 
         public Form1()
         {
@@ -55,19 +56,21 @@ namespace JpegViewer
                         {
                             vscrollBar1.Maximum = files.Length + 8;
                             vscrollBar1.Value = files.Length - 1;
-                            if (img == null) SetImage(0);
+                            if (img == null) setImage(0);
                         }
                     }
                 }
             };
             vscrollBar1.ValueChanged += (sender, e) =>
             {
-                SetImage((vscrollBar1.Maximum - 9) - vscrollBar1.Value);
+                setImage((vscrollBar1.Maximum - 9) - vscrollBar1.Value);
             };
 
             Controls.Add(button1);
             Controls.Add(button2);
             Controls.Add(vscrollBar1);
+
+            timer.Tick += timer_Tick;
         }
 
         protected override void OnResize(EventArgs e)
@@ -94,30 +97,65 @@ namespace JpegViewer
             e.Graphics.DrawImage(img, (s.Width - img.Width) / 2, (s.Height - img.Height) / 2);
         }
 
+        bool nextPage;
+
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
+            if (e.Button != MouseButtons.Left) return;
 
             var h3 = ClientSize.Height / 3;
             if (e.Y < h3)
-            {
-                if (vscrollBar1.Value > 0)
-                    vscrollBar1.Value--;
-            }
+                nextPage = true;
             else if (e.Y > h3 * 2)
-            {
-                if (vscrollBar1.Value < vscrollBar1.Maximum - 9)
-                    vscrollBar1.Value++;
-            }
+                nextPage = false;
+            else
+                return;
+            scroll(nextPage);
+            timer.Interval = 500;
+            timer.Enabled = true;
         }
 
-        private void SetImage(int index)
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            if (e.Button != MouseButtons.Left) return;
+
+            timer.Enabled = false;
+        }
+
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            timer.Enabled = false;
+            if (timer.Interval > 20)
+                timer.Interval = 20;
+            scroll(nextPage);
+            timer.Enabled = true;
+        }
+
+        private void setImage(int index)
         {
             if (files == null || files.Length == 0) return;
 
             if (img != null) img.Dispose();
             img = new Bitmap(files[index]);
             Invalidate();
+        }
+
+        private bool scroll(bool next)
+        {
+            bool f;
+            if (next)
+            {
+                f = vscrollBar1.Value > 0;
+                if (f) vscrollBar1.Value--;
+            }
+            else
+            {
+                f = vscrollBar1.Value < vscrollBar1.Maximum - 9;
+                if (f) vscrollBar1.Value++;
+            }
+            return f;
         }
     }
 }
