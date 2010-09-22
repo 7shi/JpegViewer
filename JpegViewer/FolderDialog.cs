@@ -16,14 +16,17 @@ namespace Local.Windows.Forms
         private TreeView tree = new TreeView();
         private Button OK = new Button { Text = "OK" };
         private Button Cancel = new Button { Text = "キャンセル" };
-        public string SelectedPath = "" + Path.DirectorySeparatorChar;
+        public string SelectedPath =
+                Utils.IsWin32
+                ? Environment.GetFolderPath(Environment.SpecialFolder.Personal)
+                : "" + Path.DirectorySeparatorChar;
 
         public FolderDialog()
         {
             form.Text = "フォルダの選択";
             form.MinimizeBox = false;
             form.Resize += (sender, e) => SetLayout();
-            if (Environment.OSVersion.Platform == PlatformID.WinCE)
+            if (Utils.IsWinCE)
             {
                 var r = Screen.PrimaryScreen.Bounds;
                 if (r.Width > r.Height)
@@ -71,14 +74,25 @@ namespace Local.Windows.Forms
 
         public DialogResult ShowDialog(Form parent)
         {
-            if (Environment.OSVersion.Platform != PlatformID.WinCE)
+            if (!Utils.IsWinCE)
             {
                 int x = parent.Left + (parent.Width - form.Width) / 2;
                 int y = parent.Top + (parent.Height - form.Height) / 2;
                 form.Location = new Point(x, y);
             }
             var di = new DirectoryInfo(SelectedPath);
-            ListDirectory(tree.Nodes, di.Root);
+            var drives = Utils.GetLogicalDrives();
+            if (drives != null)
+            {
+                foreach (var drive in drives)
+                {
+                    var tag = new DirectoryInfo(drive);
+                    var n = new TreeNode(drive) { Tag = tag };
+                    tree.Nodes.Add(n);
+                }
+            }
+            else
+                ListDirectory(tree.Nodes, di.Root);
             SelectPath(di);
             return form.ShowDialog();
         }
@@ -88,6 +102,7 @@ namespace Local.Windows.Forms
             var path = dir.FullName;
             var dirs = new Stack<DirectoryInfo>();
             for (; dir.Parent != null; dir = dir.Parent) dirs.Push(dir);
+            if (Utils.IsWin32) dirs.Push(dir.Root);
             TreeNode node = null;
             while (dirs.Count > 0)
             {

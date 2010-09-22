@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Net;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
@@ -26,6 +27,12 @@ namespace Local
 {
     public static class Utils
     {
+        public static readonly bool IsWin32 =
+            Environment.OSVersion.Platform.ToString().StartsWith("Win32");
+
+        public static readonly bool IsWinCE =
+            Environment.OSVersion.Platform == PlatformID.WinCE;
+
         public static string ExecutablePath
         {
             get
@@ -112,10 +119,8 @@ namespace Local
             return ret;
         }
 
-        private static PixelFormat pixelFormat =
-            Environment.OSVersion.Platform == PlatformID.WinCE
-            ? PixelFormat.Format16bppRgb565
-            : PixelFormat.Format32bppRgb;
+        public static readonly PixelFormat PixelFormat =
+            IsWinCE ? PixelFormat.Format16bppRgb565 : PixelFormat.Format32bppRgb;
 
         public static Bitmap CreateTextBitmap(string s, Font f, Color fore, Color back)
         {
@@ -126,7 +131,7 @@ namespace Local
                 using (var temp = new Bitmap(1, 1))
                 using (var g = Graphics.FromImage(temp))
                     size = g.MeasureString(s, f).ToSize();
-                ret = new Bitmap(size.Width + 1, size.Height + 1, pixelFormat);
+                ret = new Bitmap(size.Width + 1, size.Height + 1, PixelFormat);
                 using (var g = Graphics.FromImage(ret))
                 {
                     g.Clear(back);
@@ -138,7 +143,7 @@ namespace Local
 
         public static Bitmap CreateFitBitmap(Image src, int width, Color back)
         {
-            var ret = new Bitmap(width, src.Height, pixelFormat);
+            var ret = new Bitmap(width, src.Height, PixelFormat);
             if (ret.Width >= src.Width)
             {
                 using (var g = Graphics.FromImage(ret))
@@ -255,6 +260,26 @@ namespace Local
                 sr.Close();
             }
             catch { }
+        }
+
+        private static class Win32
+        {
+            [DllImport("kernel32.dll")]
+            public static extern int GetLogicalDrives();
+        }
+
+        public static string[] GetLogicalDrives()
+        {
+            if (!IsWin32) return null;
+
+            var d = Win32.GetLogicalDrives();
+            var list = new List<string>();
+            for (int i = 0; i < 26; i++)
+            {
+                if ((d & (1 << i)) != 0)
+                    list.Add(((char)('A' + i)) + ":\\");
+            }
+            return list.ToArray();
         }
     }
 }

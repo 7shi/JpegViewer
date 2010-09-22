@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
+using Local;
 using Local.Windows.Forms;
 
 namespace JpegViewer
@@ -25,7 +26,7 @@ namespace JpegViewer
             vscrollBar1 = new VScrollBar { Maximum = 0, LargeChange = 10 };
 
             Text = "JPEG Viewer";
-            if (Environment.OSVersion.Platform == PlatformID.WinCE)
+            if (Utils.IsWinCE)
             {
                 TopMost = true;
                 FormBorderStyle = FormBorderStyle.None;
