@@ -113,16 +113,40 @@ namespace JpegViewer
             button3.Bounds = new Rectangle(0, h * 2, w, h);
 
             vscrollBar1.Bounds = new Rectangle(cs.Width - w, 0, w, cs.Height);
-            Invalidate();
+            DrawImage();
+        }
+
+        private void DrawImage()
+        {
+            using (var g = CreateGraphics()) DrawImage(g);
+        }
+
+        private void DrawImage(Graphics g)
+        {
+            using (var brush = new SolidBrush(BackColor))
+            {
+                var s = ClientSize;
+                if (img == null)
+                    g.FillRectangle(brush, 0, 0, s.Width, s.Height);
+                else
+                {
+                    int l = (s.Width - img.Width) / 2;
+                    int t = (s.Height - img.Height) / 2;
+                    int r = l + img.Width;
+                    int b = t + img.Height;
+                    if (l > 0) g.FillRectangle(brush, 0, 0, l, s.Height);
+                    if (t > 0) g.FillRectangle(brush, l, 0, img.Width, t);
+                    g.DrawImage(img, (s.Width - img.Width) / 2, (s.Height - img.Height) / 2);
+                    if (r < s.Width) g.FillRectangle(brush, r, 0, s.Width - r, s.Height);
+                    if (b < s.Height) g.FillRectangle(brush, l, b, img.Width, s.Height - b);
+                }
+            }
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            if (img == null) return;
-
-            var s = ClientSize;
-            e.Graphics.DrawImage(img, (s.Width - img.Width) / 2, (s.Height - img.Height) / 2);
+            if (img != null) DrawImage(e.Graphics);
         }
 
         bool nextPage;
@@ -173,7 +197,7 @@ namespace JpegViewer
                     if (this.img != null) this.img.Dispose();
                     this.img = img;
                 }
-                Invalidate();
+                DrawImage();
             }
             catch { }
         }
