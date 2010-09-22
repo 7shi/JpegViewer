@@ -12,7 +12,7 @@ namespace JpegViewer
 {
     public class Form1 : Form
     {
-        private Button button1, button2;
+        private Button button1, button2, button3;
         private VScrollBar vscrollBar1;
         private string dir;
         private string[] files;
@@ -23,8 +23,9 @@ namespace JpegViewer
         {
             var back = BackColor;
             BackColor = Color.Black;
-            button1 = new Button { Text = "×", TabIndex = 9, BackColor = back };
-            button2 = new Button { Text = "□", TabIndex = 0, BackColor = back };
+            button1 = new Button { Text = "×", TabIndex = 8, BackColor = back };
+            button2 = new Button { Text = "｜", TabIndex = 9, BackColor = back };
+            button3 = new Button { Text = "○", TabIndex = 0, BackColor = back };
             vscrollBar1 = new VScrollBar { Maximum = 0, LargeChange = 10, BackColor = back };
 
             Text = "JPEG Viewer";
@@ -40,7 +41,8 @@ namespace JpegViewer
             }
 
             button1.Click += (sender, e) => Close();
-            button2.Click += (sender, e) =>
+            button2.Click += (sender, e) => WindowState = (FormWindowState)1;
+            button3.Click += (sender, e) =>
             {
                 using (var fd = new FolderDialog())
                 {
@@ -71,6 +73,7 @@ namespace JpegViewer
 
             Controls.Add(button1);
             Controls.Add(button2);
+            Controls.Add(button3);
             Controls.Add(vscrollBar1);
 
             timer.Tick += timer_Tick;
@@ -83,9 +86,10 @@ namespace JpegViewer
             var cs = ClientSize;
 
             var w = 50;
-            var h = cs.Height / 2;
+            var h = cs.Height / 3;
             button1.Bounds = new Rectangle(0, 0, w, h);
             button2.Bounds = new Rectangle(0, h, w, h);
+            button3.Bounds = new Rectangle(0, h * 2, w, h);
 
             vscrollBar1.Bounds = new Rectangle(cs.Width - w, 0, w, cs.Height);
             Invalidate();
