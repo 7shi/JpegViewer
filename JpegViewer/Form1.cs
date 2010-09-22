@@ -21,9 +21,11 @@ namespace JpegViewer
 
         public Form1()
         {
-            button1 = new Button { Text = "×", TabIndex = 9 };
-            button2 = new Button { Text = "□", TabIndex = 0 };
-            vscrollBar1 = new VScrollBar { Maximum = 0, LargeChange = 10 };
+            var back = BackColor;
+            BackColor = Color.Black;
+            button1 = new Button { Text = "×", TabIndex = 9, BackColor = back };
+            button2 = new Button { Text = "□", TabIndex = 0, BackColor = back };
+            vscrollBar1 = new VScrollBar { Maximum = 0, LargeChange = 10, BackColor = back };
 
             Text = "JPEG Viewer";
             if (Utils.IsWinCE)
