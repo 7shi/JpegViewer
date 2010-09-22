@@ -53,12 +53,12 @@
     <NoStdLib>true</NoStdLib>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="FolderDialog.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Utils.cs" />
+    <Compile Include="Zip.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=969db8053d3322ac, processorArchitecture=MSIL" />

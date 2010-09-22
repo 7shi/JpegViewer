@@ -16,6 +16,9 @@ namespace System
     public class STAThreadAttribute : Attribute { }
     public delegate void Action();
     public delegate void Action<T1, T2, T3>(T1 a, T2 b, T3 c);
+    public delegate TR Func<TR>();
+    public delegate TR Func<T1, TR>(T1 a);
+    public delegate TR Func<T1, T2, TR>(T1 a, T2 b);
 }
 
 namespace System.Runtime.CompilerServices
@@ -262,10 +265,12 @@ namespace Local
             catch { }
         }
 
-        private static class Win32
+        public static void Warning(string text, string caption)
         {
-            [DllImport("kernel32.dll")]
-            public static extern int GetLogicalDrives();
+            MessageBox.Show(text, caption,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Exclamation,
+                MessageBoxDefaultButton.Button1);
         }
 
         public static string[] GetLogicalDrives()
@@ -280,6 +285,28 @@ namespace Local
                     list.Add(((char)('A' + i)) + ":\\");
             }
             return list.ToArray();
+        }
+
+        public static void Minimize(this Form self)
+        {
+            if (IsWinCE)
+                WinCE.ShowWindow(self.Handle, WinCE.SW_MINIMIZE);
+            else
+                self.WindowState = (FormWindowState)1;
+        }
+
+        private static class Win32
+        {
+            [DllImport("kernel32.dll")]
+            public static extern int GetLogicalDrives();
+        }
+
+        private static class WinCE
+        {
+            public const int SW_MINIMIZE = 6;
+
+            [DllImport("CoreDll")]
+            public static extern bool ShowWindow(IntPtr hwnd, int nCmdShow);
         }
     }
 }

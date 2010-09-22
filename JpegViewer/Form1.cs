@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 using Local;
-using Local.Windows.Forms;
 
 namespace JpegViewer
 {
@@ -14,19 +13,21 @@ namespace JpegViewer
     {
         private Button button1, button2, button3;
         private VScrollBar vscrollBar1;
-        private string dir;
-        private string[] files;
+        private BinaryReader br;
+        private ZipDirHeader[] files;
         private Image img;
         private Timer timer = new Timer();
+        private OpenFileDialog ofd = new OpenFileDialog();
 
         public Form1()
         {
             var back = BackColor;
             BackColor = Color.Black;
             button1 = new Button { Text = "×", TabIndex = 8, BackColor = back };
-            button2 = new Button { Text = "｜", TabIndex = 9, BackColor = back };
-            button3 = new Button { Text = "○", TabIndex = 0, BackColor = back };
+            button2 = new Button { Text = "|", TabIndex = 9, BackColor = back };
+            button3 = new Button { Text = "O", TabIndex = 0, BackColor = back };
             vscrollBar1 = new VScrollBar { Maximum = 0, LargeChange = 10, BackColor = back };
+            ofd.Filter = "無圧縮 ZIP ファイル (*.zip)|*.zip|すべてのファイル (*.*)|*.*";
 
             Text = "JPEG Viewer";
             if (Utils.IsWinCE)
@@ -41,35 +42,10 @@ namespace JpegViewer
             }
 
             button1.Click += (sender, e) => Close();
-            button2.Click += (sender, e) => WindowState = (FormWindowState)1;
-            button3.Click += (sender, e) =>
-            {
-                using (var fd = new FolderDialog())
-                {
-                    if (fd.ShowDialog(this) == DialogResult.OK)
-                    {
-                        dir = fd.SelectedPath;
-                        files = Directory.GetFiles(dir, "*.jpg");
-                        if (img != null) img.Dispose();
-                        img = null;
-                        if (files.Length == 0)
-                        {
-                            vscrollBar1.Value = vscrollBar1.Maximum = 0;
-                            Invalidate();
-                        }
-                        else
-                        {
-                            vscrollBar1.Maximum = files.Length + 8;
-                            vscrollBar1.Value = files.Length - 1;
-                            if (img == null) setImage(0);
-                        }
-                    }
-                }
-            };
+            button2.Click += (sender, e) => this.Minimize();
+            button3.Click += button3_Click;
             vscrollBar1.ValueChanged += (sender, e) =>
-            {
                 setImage((vscrollBar1.Maximum - 9) - vscrollBar1.Value);
-            };
 
             Controls.Add(button1);
             Controls.Add(button2);
@@ -77,6 +53,51 @@ namespace JpegViewer
             Controls.Add(vscrollBar1);
 
             timer.Tick += timer_Tick;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (ofd.ShowDialog() != DialogResult.OK) return;
+
+            FileStream fs = null;
+            BinaryReader br = null;
+            ZipDirHeader[] files = null;
+            try
+            {
+                fs = new FileStream(ofd.FileName, FileMode.Open);
+                br = new BinaryReader(fs);
+                files = Zip.GetFiles(br, zipdh =>
+                {
+                    if (zipdh.Header.Compression != 0) return false;
+                    if ((zipdh.Attrs & (uint)FileAttributes.Directory) != 0) return false;
+
+                    var fb = zipdh.Filename;
+                    var fn = Encoding.Default.GetString(fb, 0, fb.Length);
+                    return Path.GetExtension(fn).ToLower() == ".jpg";
+                });
+            }
+            catch { }
+            if (fs == null)
+                Utils.Warning("ファイルが開けません。", Text);
+            else if (files == null || files.Length == 0)
+            {
+                fs.Close();
+                if (files == null)
+                    Utils.Warning("ZIP ファイルではありません。", Text);
+                else
+                    Utils.Warning("JPEG ファイルが無圧縮で含まれていません。", Text);
+            }
+            else
+            {
+                if (img != null) img.Dispose();
+                img = null;
+                if (this.br != null) this.br.Close();
+                this.br = br;
+                this.files = files;
+                vscrollBar1.Maximum = files.Length + 8;
+                vscrollBar1.Value = files.Length - 1;
+                setImage(0);
+            }
         }
 
         protected override void OnResize(EventArgs e)
@@ -144,9 +165,17 @@ namespace JpegViewer
         {
             if (files == null || files.Length == 0) return;
 
-            if (img != null) img.Dispose();
-            img = new Bitmap(files[index]);
-            Invalidate();
+            try
+            {
+                using (var ss = files[index].GetSubStream(br))
+                {
+                    var img = new Bitmap(ss);
+                    if (this.img != null) this.img.Dispose();
+                    this.img = img;
+                }
+                Invalidate();
+            }
+            catch { }
         }
 
         private bool scroll(bool next)
