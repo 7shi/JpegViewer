@@ -1,0 +1,39 @@
+[Version]
+Signature="$Windows NT$"
+Provider="7shi"
+CESignature="$Windows CE$"
+
+[CEStrings]
+AppName="JPEG Viewer"
+InstallDir=%CE1%\JpegViewer
+
+[Strings]
+Manufacturer="7shi"
+
+[CEDevice]
+VersionMin=4.0
+VersionMax=6.99
+BuildMax=0xE0000000
+
+[DefaultInstall]
+CEShortcuts=Shortcuts
+AddReg=RegKeys
+CopyFiles=Files.Common
+
+[SourceDisksNames]
+1=,"Common",,"JpegViewer\bin\Release"
+
+[SourceDisksFiles]
+"JpegViewer.exe"=1
+
+[DestinationDirs]
+Shortcuts=0,%CE2%\Start Menu
+Files.Common=0,"%InstallDir%"
+
+[Files.Common]
+"JpegViewer.exe",,,0
+
+[Shortcuts]
+"JPEG Viewer",0,"JpegViewer.exe","%CE17%"
+
+[RegKeys]
